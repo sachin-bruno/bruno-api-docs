@@ -50,7 +50,16 @@ export const BodyTab: React.FC<BodyTabProps> = ({
   return (
     <div className={`space-y-3${fillHeight ? ' h-full flex flex-col' : ''}`}>
       {!body ? (
-        <div data-testid="body-empty" className="text-center py-6 border-2 border-dashed rounded" style={{ borderColor: 'var(--border-color)', color: 'var(--text-secondary)' }}>
+        <div
+          data-testid="body-empty"
+          className="text-left"
+          style={{
+            color: 'var(--oc-tabs-secondary-inactive-color)',
+            fontSize: '0.75rem',
+            fontWeight: 400,
+            lineHeight: '1.125rem'
+          }}
+        >
           No body content. Select a body type to add content.
         </div>
       ) : 'data' in body && typeof body.data === 'string' ? (

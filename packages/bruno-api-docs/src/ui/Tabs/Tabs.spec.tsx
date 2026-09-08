@@ -98,3 +98,20 @@ describe('Tabs', () => {
     expect(queryByTestId(root, 'example-measure')).not.toBeNull();
   });
 });
+
+describe('Tabs indicator', () => {
+  it('shows no badge and no dot when the count is null, the same as when it is absent', () => {
+    const withNull = useRenderToDom(
+      <Tabs tabs={[{ id: 'a', label: 'Secrets', contentIndicator: null, content: <p>a</p> }]} testId="t" />
+    );
+    expect(withNull.querySelector('.tab-count')).toBeNull();
+    expect(withNull.querySelector('.tab-status-dot')).toBeNull();
+  });
+
+  it('still shows the dot for a text indicator', () => {
+    const withDot = useRenderToDom(
+      <Tabs tabs={[{ id: 'a', label: 'Body', contentIndicator: '\u2022', content: <p>a</p> }]} testId="t" />
+    );
+    expect(withDot.querySelector('.tab-status-dot')).not.toBeNull();
+  });
+});

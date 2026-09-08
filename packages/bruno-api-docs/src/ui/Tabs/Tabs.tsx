@@ -10,7 +10,7 @@ export interface Tab {
   id: string;
   label: string;
   count?: number;
-  contentIndicator?: string | number;
+  contentIndicator?: string | number | null;
   content: ReactNode;
   rightElement?: ReactNode;
   disabled?: boolean;
@@ -33,7 +33,7 @@ interface TabsProps {
 
 const renderIndicator = (tab: Tab): ReactNode => {
   const indicator = tab.count ?? tab.contentIndicator;
-  if (indicator === undefined) return null;
+  if (indicator === undefined || indicator === null) return null;
   if (typeof indicator === 'number') return <sup className="tab-count">{indicator}</sup>;
   return (
     <sup className="tab-status-dot" aria-hidden="true">

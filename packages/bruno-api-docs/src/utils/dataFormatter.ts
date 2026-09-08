@@ -3,6 +3,7 @@ import { JSONPath } from 'jsonpath-plus';
 import type { XMLFormatterOptions } from 'xml-formatter';
 import xmlFormat from 'xml-formatter';
 import fastJsonFormat from 'fast-json-format';
+import { applyEdits, format as formatJsonc } from 'jsonc-parser';
 import prettierFormat from 'prettier/standalone';
 import parserBabel from 'prettier/parser-babel';
 import type { RunRequestResponse } from '@/runner';
@@ -54,6 +55,48 @@ export const prettifyHtmlString = (htmlString: string): string => {
   } catch (error) {
     console.error(error);
     return htmlString;
+  }
+};
+
+const BRUNO_VARIABLE_PATTERN = /\{\{[^{}]*\}\}/g;
+
+const hashBrunoVariables = (input: string) => {
+  let prefix = '__bruno_var_';
+  while (input.includes(prefix)) {
+    prefix += '_';
+  }
+
+  const variables: string[] = [];
+  const hashed = input.replace(BRUNO_VARIABLE_PATTERN, (match) => {
+    variables.push(match);
+    return `${prefix}${variables.length - 1}__`;
+  });
+
+  return {
+    hashed,
+    restore: (formatted: string) =>
+      formatted.replace(new RegExp(`${prefix}(\\d+)__`, 'g'), (match, index) => variables[Number(index)] ?? match)
+  };
+};
+
+export const prettifyJsonString = (jsonString: string): string => {
+  if (typeof jsonString !== 'string' || !jsonString.trim()) return jsonString;
+
+  try {
+    const { hashed, restore } = hashBrunoVariables(jsonString);
+    return restore(applyEdits(hashed, formatJsonc(hashed, undefined, { tabSize: 2, insertSpaces: true })));
+  } catch {
+    return jsonString;
+  }
+};
+
+export const prettifyXmlString = (xmlString: string): string => {
+  if (typeof xmlString !== 'string' || !xmlString.trim()) return xmlString;
+
+  try {
+    return xmlFormat(xmlString, { collapseContent: true, lineSeparator: '\n', strictMode: true });
+  } catch {
+    return xmlString;
   }
 };
 
