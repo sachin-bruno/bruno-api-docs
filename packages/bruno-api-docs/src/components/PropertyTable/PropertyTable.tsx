@@ -68,22 +68,25 @@ export const PropertyTable: React.FC<PropertyTableProps> = ({ rows, emptyMessage
       ) : null
     ) : (
       <dl className="property-box">
-        {rows.map((row, index) => (
-          <div className="property-row" key={`${row.label}-${index}`}>
-            <dt className="property-key"><TruncatedText text={row.label} /></dt>
-            <dd className="property-value-cell" data-testid={testId && row.testId ? `${testId}-${row.testId}` : undefined}>
-              <div className="property-value-line" data-testid="property-value-line">
-                <div className="property-value-main" data-testid="property-value"><ValueCell row={row} testId={testId} /></div>
-                {row.type && !hasNoValue(row) ? <span className="property-type">{row.type}</span> : null}
-                {row.disabled ? <DisabledBadge /> : null}
-              </div>
-            </dd>
-            {row.inheritedSource ? (
-              <InheritedSourceLink source={row.inheritedSource} itemName={row.label} onNavigate={onNavigate} />
-            ) : null}
-            <Description text={row.description} />
-          </div>
-        ))}
+        {rows.map((row, index) => {
+          const rowTestId = testId && row.testId ? `${testId}-${row.testId}` : undefined;
+          return (
+            <div className="property-row" key={`${row.label}-${index}`}>
+              <dt className="property-key"><TruncatedText text={row.label} /></dt>
+              <dd className="property-value-cell" data-testid={rowTestId}>
+                <div className="property-value-line" data-testid="property-value-line">
+                  <div className="property-value-main" data-testid="property-value"><ValueCell row={row} testId={rowTestId} /></div>
+                  {row.type && !hasNoValue(row) ? <span className="property-type">{row.type}</span> : null}
+                  {row.disabled ? <DisabledBadge /> : null}
+                </div>
+              </dd>
+              {row.inheritedSource ? (
+                <InheritedSourceLink source={row.inheritedSource} itemName={row.label} onNavigate={onNavigate} />
+              ) : null}
+              <Description text={row.description} />
+            </div>
+          );
+        })}
       </dl>
     )}
   </StyledWrapper>

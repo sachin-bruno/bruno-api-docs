@@ -60,11 +60,23 @@ export const prettifyHtmlString = (htmlString: string): string => {
 
 const BRUNO_VARIABLE_PATTERN = /\{\{[^{}]*\}\}/g;
 
-const hashBrunoVariables = (input: string) => {
-  let prefix = '__bruno_var_';
-  while (input.includes(prefix)) {
-    prefix += '_';
+const BRUNO_VARIABLE_STEM = '__bruno_var';
+
+const BRUNO_VARIABLE_STEM_RUN = /(?=__bruno_var(_*))/g;
+
+const unusedVariablePrefix = (input: string) => {
+  const shortest = `${BRUNO_VARIABLE_STEM}_`;
+  if (!input.includes(shortest)) return shortest;
+
+  let longestRun = 0;
+  for (const [, run] of input.matchAll(BRUNO_VARIABLE_STEM_RUN)) {
+    longestRun = Math.max(longestRun, run.length);
   }
+  return `${BRUNO_VARIABLE_STEM}${'_'.repeat(longestRun + 1)}`;
+};
+
+const hashBrunoVariables = (input: string) => {
+  const prefix = unusedVariablePrefix(input);
 
   const variables: string[] = [];
   const hashed = input.replace(BRUNO_VARIABLE_PATTERN, (match) => {

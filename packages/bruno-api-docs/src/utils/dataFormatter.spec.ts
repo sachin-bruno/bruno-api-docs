@@ -67,6 +67,17 @@ describe('prettifyJsonString', () => {
       const out = prettifyJsonString('{"note":"__bruno_var_0__","id":"{{id}}"}');
       expect(out).toBe('{\n  "note": "__bruno_var_0__",\n  "id": "{{id}}"\n}');
     });
+
+    it('leaves the body alone when that internal text is repeated so the copies overlap', () => {
+      const out = prettifyJsonString('{"note":"__bruno_var__bruno_var___","id":"{{id}}"}');
+      expect(out).toBe('{\n  "note": "__bruno_var__bruno_var___",\n  "id": "{{id}}"\n}');
+    });
+
+    it('leaves the body alone when it contains a long run of the internal text', () => {
+      const note = `__bruno_var${'_'.repeat(40)}`;
+      const out = prettifyJsonString(`{"note":"${note}","id":"{{id}}"}`);
+      expect(out).toBe(`{\n  "note": "${note}",\n  "id": "{{id}}"\n}`);
+    });
   });
 
   describe('never changing what the body actually says', () => {

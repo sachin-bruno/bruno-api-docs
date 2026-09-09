@@ -5,7 +5,7 @@ import { describe, it, expect } from 'vitest';
 import type { HttpRequest } from '@opencollection/types/requests/http';
 import { BodyModeSelector, resolveBodyMode } from './BodyModeSelector';
 import type { RequestBody } from '@/utils/schemaHelpers';
-import { getByTestId, queryByTestId } from '@/test-utils/dom';
+import { getByTestId, query, queryByTestId } from '@/test-utils/dom';
 
 const noop = () => {};
 
@@ -73,18 +73,21 @@ describe('BodyModeSelector', () => {
 
   it('shows the icon for the body type the user has selected', () => {
     const trigger = getByTestId(renderSelector({ type: 'json', data: '' } as RequestBody), 'body-type-select');
-    expect(trigger.querySelectorAll('svg').length).toBe(2);
-    expect(trigger.querySelector('svg')?.getAttribute('class')).toContain('icon-tabler-braces');
+    const icons = trigger.querySelectorAll('svg');
+    expect(icons.length).toBe(2);
+    expect(query(trigger, 'svg').getAttribute('class')).toContain('icon-tabler-braces');
   });
 
   it('shows a different icon when a different body type is selected', () => {
     const trigger = getByTestId(renderSelector({ type: 'xml', data: '' } as RequestBody), 'body-type-select');
-    expect(trigger.querySelector('svg')?.getAttribute('class')).toContain('icon-tabler-code');
+    const icons = trigger.querySelectorAll('svg');
+    expect(icons.length).toBe(2);
+    expect(query(trigger, 'svg').getAttribute('class')).toContain('icon-tabler-code');
   });
 
   it('offers the Prettify button for a JSON body', () => {
     const root = renderSelector({ type: 'json', data: '{"a":1}' } as RequestBody);
-    expect(queryByTestId(root, 'body-prettify')?.text).toContain('Prettify');
+    expect(getByTestId(root, 'body-prettify').text).toContain('Prettify');
   });
 
   it('offers the Prettify button for an XML body', () => {

@@ -3,7 +3,7 @@ import { describe, it, expect } from 'vitest';
 import type { HttpRequest } from '@opencollection/types/requests/http';
 import { useRenderToDom } from '@/hooks/useRenderToDom';
 import { queryByTestId } from '@/test-utils/dom';
-import { getRequestUrl } from '@/utils/schemaHelpers';
+import { getHttpParams, getRequestUrl } from '@/utils/schemaHelpers';
 import QueryBar, { applyUrlChange } from './QueryBar';
 
 const item: HttpRequest = {
@@ -50,6 +50,6 @@ describe('Playground QueryBar: editing the url', () => {
 
   it('still picks up path parameters as the user types them into the url', () => {
     const request = applyUrlChange(withLegacyUrl(), 'https://api.test/users/:userId');
-    expect(request.http?.params?.some((param) => param.name === 'userId' && param.type === 'path')).toBe(true);
+    expect(getHttpParams(request)).toContainEqual(expect.objectContaining({ name: 'userId', type: 'path' }));
   });
 });
