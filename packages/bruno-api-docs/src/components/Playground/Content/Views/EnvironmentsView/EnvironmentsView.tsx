@@ -172,7 +172,7 @@ const EnvironmentsView: React.FC<EnvironmentsViewProps> = ({ collection, compact
       />
     );
 
-  const panels: Record<EnvTabId, { contentIndicator: number | null; content: React.ReactNode }> = {
+  const panels: Record<EnvTabId, { contentIndicator: number | undefined; content: React.ReactNode }> = {
     variables: {
       contentIndicator: countEnabled(plainRows),
       content: renderVars(plainRows, (rows) => commit(rows, secretRows), {

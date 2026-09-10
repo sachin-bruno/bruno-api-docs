@@ -372,20 +372,20 @@ describe('countEnabled', () => {
   });
 
   it('shows no number on the tab when every row is unticked', () => {
-    expect(countEnabled([{ disabled: true }, { disabled: true }])).toBeNull();
+    expect(countEnabled([{ disabled: true }, { disabled: true }])).toBeUndefined();
   });
 
   it('shows no number on the tab when there are no rows', () => {
-    expect(countEnabled([])).toBeNull();
+    expect(countEnabled([])).toBeUndefined();
   });
 
   it('shows no number on the tab when there are no rows at all', () => {
-    expect(countEnabled(undefined)).toBeNull();
+    expect(countEnabled(undefined)).toBeUndefined();
   });
 
   it('also counts editable rows, which say enabled rather than disabled', () => {
     expect(countEnabled([{ enabled: true }, { enabled: false }, { enabled: true }])).toBe(2);
-    expect(countEnabled([{ enabled: false }])).toBeNull();
+    expect(countEnabled([{ enabled: false }])).toBeUndefined();
   });
 
   it('reads either row shape, so both kinds can be counted by the one helper', () => {

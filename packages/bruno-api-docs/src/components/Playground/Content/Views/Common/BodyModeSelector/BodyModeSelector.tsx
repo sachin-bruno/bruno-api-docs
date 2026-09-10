@@ -115,6 +115,7 @@ export const BodyModeSelector: React.FC<BodyModeSelectorProps> = ({ body, onItem
         items={bodyMenuItems}
         groupStyle="select"
         showGroupDividers={false}
+        sticky="reference"
       >
         <BodyActionButton type="button" aria-label="Body Type">
           {CurrentBodyIcon && <CurrentBodyIcon size={14} strokeWidth={2} aria-hidden />}

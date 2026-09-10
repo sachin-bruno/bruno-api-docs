@@ -67,14 +67,13 @@ export const Dropdown: React.FC<DropdownProps> = ({
       }
     : props.popperOptions;
 
-  const resolvedPlugins = [...(props.plugins ?? []), sticky];
+  const resolvedPlugins = props.sticky ? [...(props.plugins ?? []), sticky] : props.plugins;
 
   const sharedProps = {
     interactive: true,
     appendTo: resolvedAppendTo,
     popperOptions: resolvedPopperOptions,
-    plugins: resolvedPlugins,
-    sticky: 'reference' as const
+    ...(resolvedPlugins ? { plugins: resolvedPlugins } : {})
   };
 
   const tippyProps: Partial<TippyProps>

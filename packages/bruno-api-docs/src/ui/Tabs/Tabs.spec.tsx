@@ -100,12 +100,18 @@ describe('Tabs', () => {
 });
 
 describe('Tabs indicator', () => {
-  it('shows no badge and no dot when the count is null, the same as when it is absent', () => {
-    const withNull = useRenderToDom(
-      <Tabs tabs={[{ id: 'a', label: 'Secrets', contentIndicator: null, content: <p>a</p> }]} testId="t" />
+  it('shows no badge and no dot when there is no count, whether it is absent or explicitly unset', () => {
+    const absent = useRenderToDom(
+      <Tabs tabs={[{ id: 'a', label: 'Secrets', content: <p>a</p> }]} testId="t" />
     );
-    expect(withNull.querySelector('.tab-count')).toBeNull();
-    expect(withNull.querySelector('.tab-status-dot')).toBeNull();
+    expect(absent.querySelector('.tab-count')).toBeNull();
+    expect(absent.querySelector('.tab-status-dot')).toBeNull();
+
+    const unset = useRenderToDom(
+      <Tabs tabs={[{ id: 'a', label: 'Secrets', contentIndicator: undefined, content: <p>a</p> }]} testId="t" />
+    );
+    expect(unset.querySelector('.tab-count')).toBeNull();
+    expect(unset.querySelector('.tab-status-dot')).toBeNull();
   });
 
   it('still shows the dot for a text indicator', () => {

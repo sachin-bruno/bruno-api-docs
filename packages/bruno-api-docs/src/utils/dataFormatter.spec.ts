@@ -73,10 +73,50 @@ describe('prettifyJsonString', () => {
       expect(out).toBe('{\n  "note": "__bruno_var__bruno_var___",\n  "id": "{{id}}"\n}');
     });
 
+    it('keeps escape sequences escaped, so the result is still valid json', () => {
+      const out = prettifyJsonString('{"a":"\\u0001","b":"line\\nbreak","c":"tab\\there"}');
+      expect(out).toContain('\\u0001');
+      expect(() => JSON.parse(out)).not.toThrow();
+    });
+
     it('leaves the body alone when it contains a long run of the internal text', () => {
       const note = `__bruno_var${'_'.repeat(40)}`;
       const out = prettifyJsonString(`{"note":"${note}","id":"{{id}}"}`);
       expect(out).toBe(`{\n  "note": "${note}",\n  "id": "{{id}}"\n}`);
+    });
+  });
+
+  describe('a big body pasted as one long line', () => {
+    const singleLineBody = (pairs: number) => {
+      const parts = [];
+      for (let index = 0; index < pairs; index++) {
+        parts.push(`"key${index}":{"a":${index},"b":"value ${index}"}`);
+      }
+      return `{${parts.join(',')}}`;
+    };
+
+    it('formats half a megabyte on one line without locking up', () => {
+      const body = singleLineBody(20000);
+      expect(body.length).toBeGreaterThan(500_000);
+
+      const startedAt = performance.now();
+      const out = prettifyJsonString(body);
+      const elapsed = performance.now() - startedAt;
+
+      expect(out.split('\n').length).toBeGreaterThan(20000);
+      expect(out).toContain('"key0": {');
+      expect(out).toContain('"key19999": {');
+      expect(elapsed).toBeLessThan(2000);
+    });
+
+    it('keeps every variable in a big one-line body', () => {
+      const parts = [];
+      for (let index = 0; index < 5000; index++) parts.push(`"k${index}":"{{var${index}}}"`);
+
+      const out = prettifyJsonString(`{${parts.join(',')}}`);
+
+      expect(out.match(/\{\{var\d+\}\}/g)).toHaveLength(5000);
+      expect(out).toContain('{{var4999}}');
     });
   });
 

@@ -3,7 +3,8 @@ import { JSONPath } from 'jsonpath-plus';
 import type { XMLFormatterOptions } from 'xml-formatter';
 import xmlFormat from 'xml-formatter';
 import fastJsonFormat from 'fast-json-format';
-import { applyEdits, format as formatJsonc } from 'jsonc-parser';
+import type { Edit } from 'jsonc-parser';
+import { format as formatJsonc } from 'jsonc-parser';
 import prettierFormat from 'prettier/standalone';
 import parserBabel from 'prettier/parser-babel';
 import type { RunRequestResponse } from '@/runner';
@@ -91,12 +92,27 @@ const hashBrunoVariables = (input: string) => {
   };
 };
 
+const applyFormattingEdits = (text: string, edits: Edit[]): string => {
+  const ordered = [...edits].sort((a, b) => a.offset - b.offset || a.length - b.length);
+  const chunks: string[] = [];
+  let cursor = 0;
+
+  for (const { offset, length, content } of ordered) {
+    if (offset < cursor) throw new Error('Overlapping edit');
+    chunks.push(text.slice(cursor, offset), content);
+    cursor = offset + length;
+  }
+  chunks.push(text.slice(cursor));
+
+  return chunks.join('');
+};
+
 export const prettifyJsonString = (jsonString: string): string => {
   if (typeof jsonString !== 'string' || !jsonString.trim()) return jsonString;
 
   try {
     const { hashed, restore } = hashBrunoVariables(jsonString);
-    return restore(applyEdits(hashed, formatJsonc(hashed, undefined, { tabSize: 2, insertSpaces: true })));
+    return restore(applyFormattingEdits(hashed, formatJsonc(hashed, undefined, { tabSize: 2, insertSpaces: true })));
   } catch {
     return jsonString;
   }
