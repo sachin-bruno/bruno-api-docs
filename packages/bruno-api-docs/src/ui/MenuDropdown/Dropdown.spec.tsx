@@ -22,7 +22,7 @@ const render = (props: Record<string, unknown>) => {
       <p>content</p>
     </Dropdown>
   );
-  return capturedProps.at(-1)!;
+  return capturedProps[capturedProps.length - 1];
 };
 
 describe('Dropdown sticky positioning', () => {
