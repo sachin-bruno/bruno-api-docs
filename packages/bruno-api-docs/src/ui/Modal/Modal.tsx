@@ -1,19 +1,34 @@
-import React, { useEffect, useRef, type ReactNode } from 'react';
+import React, { useCallback, useEffect, useRef, type ReactNode } from 'react';
 import { Portal } from '@/ui/Portal/Portal';
 import { CloseIcon } from '@/assets/icons';
 import { StyledWrapper } from './StyledWrapper';
 
-interface ModalProps {
+export interface ModalProps {
   open: boolean;
   onClose: () => void;
   title?: ReactNode;
   children: ReactNode;
   ariaLabel?: string;
   className?: string;
+  initialFocusRef?: React.RefObject<HTMLElement | null>;
 }
 
-export const Modal: React.FC<ModalProps> = ({ open, onClose, title, children, ariaLabel, className }) => {
+export const Modal: React.FC<ModalProps> = ({
+  open, onClose, title, children, ariaLabel, className, initialFocusRef
+}) => {
   const dialogRef = useRef<HTMLDivElement>(null);
+  const focusedRef = useRef(false);
+
+  const attachDialog = useCallback((node: HTMLDivElement | null) => {
+    dialogRef.current = node;
+    if (!node) {
+      focusedRef.current = false;
+      return;
+    }
+    if (focusedRef.current) return;
+    focusedRef.current = true;
+    (initialFocusRef?.current ?? node).focus();
+  }, [initialFocusRef]);
 
   useEffect(() => {
     if (!open) return undefined;
@@ -23,7 +38,6 @@ export const Modal: React.FC<ModalProps> = ({ open, onClose, title, children, ar
     document.addEventListener('keydown', onKeyDown);
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
-    dialogRef.current?.focus();
     return () => {
       document.removeEventListener('keydown', onKeyDown);
       document.body.style.overflow = previousOverflow;
@@ -40,7 +54,7 @@ export const Modal: React.FC<ModalProps> = ({ open, onClose, title, children, ar
           if (event.target === event.currentTarget) onClose();
         }}
       >
-        <div ref={dialogRef} className="modal-dialog" role="dialog" aria-modal="true" aria-label={ariaLabel} tabIndex={-1}>
+        <div ref={attachDialog} className="modal-dialog" role="dialog" aria-modal="true" aria-label={ariaLabel} tabIndex={-1}>
           <div className="modal-head">
             {title !== undefined && <div className="modal-title">{title}</div>}
             <button type="button" className="modal-close" aria-label="Close" onClick={onClose}>

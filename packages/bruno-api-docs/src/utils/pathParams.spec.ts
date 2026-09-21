@@ -461,3 +461,34 @@ describe('setUrlQueryParams', () => {
     );
   });
 });
+
+describe('a prompt variable in the URL', () => {
+  it('does not invent a query parameter from the marker inside {{?Name}}', () => {
+    expect(syncQueryParams([], 'https://api.example.com/otp/{{?OTP}}')).toEqual([]);
+  });
+
+  it('still reads a real query string that follows a prompt token', () => {
+    expect(syncQueryParams([], 'https://api.example.com/{{?User}}?page=2')).toEqual([
+      { name: 'page', value: '2', type: 'query' }
+    ]);
+  });
+
+  it('leaves the token intact when the URL is rebuilt', () => {
+    expect(buildRequestUrl('https://api.example.com/otp/{{?OTP}}', [])).toBe(
+      'https://api.example.com/otp/{{?OTP}}'
+    );
+  });
+
+  it('appends a real parameter after a URL holding a prompt token', () => {
+    expect(
+      buildRequestUrl('https://api.example.com/otp/{{?OTP}}', [{ name: 'page', value: '2', type: 'query' }])
+    ).toBe('https://api.example.com/otp/{{?OTP}}?page=2');
+  });
+
+  it('is unaffected for an ordinary URL with a query string', () => {
+    expect(syncQueryParams([], 'https://api.example.com/x?a=1&b=2')).toEqual([
+      { name: 'a', value: '1', type: 'query' },
+      { name: 'b', value: '2', type: 'query' }
+    ]);
+  });
+});

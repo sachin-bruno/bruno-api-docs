@@ -108,10 +108,10 @@ describe('interpolateVars — typed variables in a JSON body', () => {
     });
   });
 
-  it('still JSON-escapes a string value that contains quotes', () => {
+  it('puts a quote in a variable value straight into the body, the way the desktop app does', () => {
     const out = interpolateVars(jsonReq('{"note":"{{note}}"}'), {
       folderVariables: { note: 'he said "hi"' }
     });
-    expect(JSON.parse((out.http!.body as { data: string }).data)).toEqual({ note: 'he said "hi"' });
+    expect((out.http!.body as { data: string }).data).toBe('{"note":"he said "hi""}');
   });
 });

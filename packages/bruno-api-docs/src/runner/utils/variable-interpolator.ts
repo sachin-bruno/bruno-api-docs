@@ -11,6 +11,8 @@ export type Variables = Record<string, JsonValue>;
 const MOCK_PATTERN = /\{\{\$(\w+)\}\}/g;
 const JSON_SPECIAL_CHARS = /[\\\n\r\t"]/;
 
+const MAX_INTERPOLATION_PASSES = 10;
+
 const escapeJSONString = (str: string): string => {
   if (!JSON_SPECIAL_CHARS.test(str)) {
     return str;
@@ -70,35 +72,45 @@ export const interpolate = (
   const mocked = prepareMock(str, escapeJSONStrings);
   const preparedVars = isPlainObject(variables) ? prepareMockObj(variables, escapeJSONStrings) : variables;
 
-  return mocked.replace(templateVariableGlobalRegex(), (match, variableName) => {
-    const trimmedName = variableName.trim();
+  const substitute = (input: string): { output: string; changed: boolean } => {
+    let changed = false;
+    const output = input.replace(templateVariableGlobalRegex(), (match, variableName) => {
+      const trimmedName = variableName.trim();
 
-    // Handle nested object access (e.g., process.env.NODE_ENV)
-    const value = getNestedValue(preparedVars, trimmedName);
+      // Handle nested object access (e.g., process.env.NODE_ENV)
+      const value = getNestedValue(preparedVars, trimmedName);
 
-    if (value === null) {
-      return match; // Keep original if variable not found
-    }
+      if (value === null) {
+        return match; // Keep original if variable not found
+      }
 
-    // A typed object/array variable is inserted as raw JSON (never quote-escaped — that would
-    // corrupt a JSON body), and numbers/booleans bare. Only string values get JSON-escaped.
-    if (typeof value === 'object') {
-      return JSON.stringify(value);
-    }
+      changed = true;
 
-    let result = String(value);
-    if (escapeJSONStrings && typeof value === 'string') {
-      result = result.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
-    }
+      if (typeof value === 'object') {
+        return JSON.stringify(value);
+      }
 
-    return result;
-  });
+      return String(value);
+    });
+    return { output, changed };
+  };
+
+  let resolved = mocked;
+  for (let pass = 0; pass < MAX_INTERPOLATION_PASSES; pass += 1) {
+    const { output, changed } = substitute(resolved);
+    if (!changed || output === resolved) return output;
+    resolved = output;
+  }
+  return resolved;
 };
 
 /**
  * Get nested value from object using dot notation
  */
 const getNestedValue = (obj: JsonValue, path: string): JsonValue => {
+  if (path.startsWith('?') && obj != null && typeof obj === 'object') {
+    return (obj as { [k: string]: JsonValue })[path] ?? null;
+  }
   return path.split('.').reduce<JsonValue>((current, key) => {
     if (current != null && typeof current === 'object') {
       return (current as { [k: string]: JsonValue })[key] ?? null;

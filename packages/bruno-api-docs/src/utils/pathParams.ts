@@ -157,7 +157,7 @@ export const buildRequestUrl = (
   const hashIndex = withPath.indexOf('#');
   const fragment = hashIndex === -1 ? '' : withPath.slice(hashIndex);
   const beforeHash = hashIndex === -1 ? withPath : withPath.slice(0, hashIndex);
-  const qIndex = beforeHash.indexOf('?');
+  const qIndex = queryStartIndex(beforeHash);
   const base = qIndex === -1 ? beforeHash : beforeHash.slice(0, qIndex);
   const existingQuery = qIndex === -1 ? '' : beforeHash.slice(qIndex + 1);
 
@@ -186,11 +186,29 @@ export const buildRequestUrl = (
   return `${base}${queryString ? `?${queryString}` : ''}${fragment}`;
 };
 
+const queryStartIndex = (str: string): number => {
+  let depth = 0;
+  for (let i = 0; i < str.length; i += 1) {
+    if (str.startsWith('{{', i)) {
+      depth += 1;
+      i += 1;
+      continue;
+    }
+    if (depth > 0 && str.startsWith('}}', i)) {
+      depth -= 1;
+      i += 1;
+      continue;
+    }
+    if (depth === 0 && str[i] === '?') return i;
+  }
+  return -1;
+};
+
 const parseUrlQueryParams = (url: string | undefined | null): { name: string; value: string }[] => {
   if (!url || typeof url !== 'string') return [];
 
   const beforeHash = url.split('#')[0];
-  const qIndex = beforeHash.indexOf('?');
+  const qIndex = queryStartIndex(beforeHash);
   if (qIndex === -1) return [];
 
   const pairs: { name: string; value: string }[] = [];

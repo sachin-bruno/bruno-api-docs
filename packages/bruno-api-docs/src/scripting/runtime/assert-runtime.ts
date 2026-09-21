@@ -110,6 +110,7 @@ export class AssertRuntime {
       collectionVariables = {},
       folderVariables = {},
       requestVariables = {},
+      promptVariables = {},
       globalEnvironmentVariables = {}
     } = variables;
 
@@ -120,6 +121,7 @@ export class AssertRuntime {
       variables: {
         environmentVariables,
         runtimeVariables,
+        promptVariables,
         globalEnvironmentVariables
       }
     });
