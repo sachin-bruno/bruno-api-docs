@@ -2,6 +2,7 @@ import type { HttpRequest, HttpRequestHeader, HttpRequestParam } from '@opencoll
 import { isPlainObject } from 'lodash-es';
 import { getRequestUrl, getHttpMethod, getHttpHeaders, getHttpBody, getHttpParams, getRequestAuth } from '@/utils/schemaHelpers';
 import { templateVariableGlobalRegex } from '@/utils/common';
+import { isPromptVariableToken } from '@/utils/promptVariables';
 import { mockDataFunctions } from './faker-functions';
 
 export type JsonValue = string | number | boolean | null | JsonValue[] | { [key: string]: JsonValue };
@@ -72,10 +73,17 @@ export const interpolate = (
   const mocked = prepareMock(str, escapeJSONStrings);
   const preparedVars = isPlainObject(variables) ? prepareMockObj(variables, escapeJSONStrings) : variables;
 
+  const substituted = new Set<string>();
+
   const substitute = (input: string): { output: string; changed: boolean } => {
     let changed = false;
+    const substitutedThisPass = new Set<string>();
     const output = input.replace(templateVariableGlobalRegex(), (match, variableName) => {
       const trimmedName = variableName.trim();
+
+      if (substituted.has(trimmedName)) {
+        return match;
+      }
 
       // Handle nested object access (e.g., process.env.NODE_ENV)
       const value = getNestedValue(preparedVars, trimmedName);
@@ -85,13 +93,20 @@ export const interpolate = (
       }
 
       changed = true;
+      substitutedThisPass.add(trimmedName);
 
       if (typeof value === 'object') {
         return JSON.stringify(value);
       }
 
-      return String(value);
+      let result = String(value);
+      if (escapeJSONStrings && typeof value === 'string' && !isPromptVariableToken(trimmedName)) {
+        result = result.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+      }
+
+      return result;
     });
+    for (const name of substitutedThisPass) substituted.add(name);
     return { output, changed };
   };
 

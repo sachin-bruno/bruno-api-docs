@@ -18,34 +18,36 @@ const dialogTree = (props: Partial<React.ComponentProps<typeof PromptVariablesMo
   />
 );
 
-const fields = (root: ReturnType<typeof useRenderToDom>) =>
-  root.querySelectorAll('input[data-testid^="prompt-variable-input-"]');
+const fieldValues = (root: ReturnType<typeof useRenderToDom>, count: number) =>
+  Array.from({ length: count }, (_, index) =>
+    getByTestId(root, `prompt-variable-input-${index}`).getAttribute('value'));
 
 describe('the dialog that asks for prompt values', () => {
   it('asks for one value per prompt, labelled with the prompt name', () => {
     const root = useRenderToDom(dialogTree({ names: ['OTP', 'User id'] }));
 
     expect(root.querySelectorAll('[data-testid="prompt-variable-input-container"]')).toHaveLength(2);
-    expect(query(root, 'label[for="prompt-0"]').text).toBe('OTP');
-    expect(query(root, 'label[for="prompt-1"]').text).toBe('User id');
+    expect(getByTestId(root, 'prompt-variable-label-0').text).toBe('OTP');
+    expect(getByTestId(root, 'prompt-variable-label-1').text).toBe('User id');
   });
 
   it('points each label at the field it names', () => {
     const root = useRenderToDom(dialogTree({ names: ['OTP'] }));
 
-    expect(query(root, 'label').getAttribute('for')).toBe(getByTestId(root, 'prompt-variable-input-0').id);
+    expect(getByTestId(root, 'prompt-variable-label-0').getAttribute('for'))
+      .toBe(getByTestId(root, 'prompt-variable-input-0').id);
   });
 
   it('starts every field empty on each send', () => {
     const root = useRenderToDom(dialogTree({ names: ['OTP', 'Region'] }));
 
-    expect(fields(root).map((field) => field.getAttribute('value'))).toEqual(['', '']);
+    expect(fieldValues(root, 2)).toEqual(['', '']);
   });
 
   it('matches the wording for the title and the two buttons', () => {
     const root = useRenderToDom(dialogTree());
 
-    expect(query(root, '.modal-title').text).toContain('Input Required');
+    expect(getByTestId(root, 'prompt-variables-title').text).toBe('Input Required');
     expect(getByTestId(root, 'prompt-variables-submit').text).toBe('Continue');
     expect(getByTestId(root, 'prompt-variables-cancel').text).toBe('Cancel');
   });

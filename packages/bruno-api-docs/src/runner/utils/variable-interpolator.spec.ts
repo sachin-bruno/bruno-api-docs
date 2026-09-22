@@ -108,10 +108,50 @@ describe('interpolateVars — typed variables in a JSON body', () => {
     });
   });
 
-  it('puts a quote in a variable value straight into the body, the way the desktop app does', () => {
+  it('still JSON-escapes a string value that contains quotes', () => {
     const out = interpolateVars(jsonReq('{"note":"{{note}}"}'), {
       folderVariables: { note: 'he said "hi"' }
     });
-    expect((out.http!.body as { data: string }).data).toBe('{"note":"he said "hi""}');
+    expect(JSON.parse((out.http!.body as { data: string }).data)).toEqual({ note: 'he said "hi"' });
+  });
+});
+
+describe('interpolateVars — a variable whose value mentions its own name', () => {
+  it('does not keep growing the text on every pass', () => {
+    const out = interpolateVars(req({ url: '{{a}}' }), {
+      collectionVariables: { a: '{{a}}{{a}}{{a}}{{a}}' }
+    });
+
+    expect(out.http!.url!.length).toBeLessThan(100);
+  });
+
+  it('leaves the unresolvable token in place rather than looping on it', () => {
+    const out = interpolateVars(req({ url: '{{a}}' }), { collectionVariables: { a: '{{a}}' } });
+
+    expect(out.http!.url).toBe('{{a}}');
+  });
+
+  it('stops a pair of variables that point at each other', () => {
+    const out = interpolateVars(req({ url: '{{a}}' }), {
+      collectionVariables: { a: '{{b}}{{b}}', b: '{{a}}{{a}}' }
+    });
+
+    expect(out.http!.url!.length).toBeLessThan(100);
+  });
+
+  it('still fills in the same variable everywhere it appears', () => {
+    const out = interpolateVars(req({ url: 'https://{{host}}/{{host}}' }), {
+      collectionVariables: { host: 'api.com' }
+    });
+
+    expect(out.http!.url).toBe('https://api.com/api.com');
+  });
+
+  it('still follows a chain of variables that point at one another', () => {
+    const out = interpolateVars(req({ url: '{{a}}' }), {
+      collectionVariables: { a: '{{b}}', b: '{{c}}', c: 'https://api.com' }
+    });
+
+    expect(out.http!.url).toBe('https://api.com');
   });
 });

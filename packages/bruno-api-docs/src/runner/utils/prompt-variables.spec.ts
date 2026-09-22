@@ -57,6 +57,47 @@ describe('sending a request with prompt answers', () => {
 
     expect(out.http!.url).toBe('https://api.com/otp/');
   });
+
+  it('puts the answer into a bearer token', () => {
+    const out = interpolateVars(
+      req({ url: 'https://api.com', auth: { type: 'bearer', token: '{{?Token}}' } }),
+      { promptVariables: { '?Token': 'abc123' } }
+    );
+
+    expect(out.http!.auth).toMatchObject({ type: 'bearer', token: 'abc123' });
+  });
+
+  it('puts the answers into a basic username and password', () => {
+    const out = interpolateVars(
+      req({
+        url: 'https://api.com',
+        auth: { type: 'basic', username: '{{?User}}', password: '{{?Pass}}' }
+      }),
+      { promptVariables: { '?User': 'ada', '?Pass': 'hunter2' } }
+    );
+
+    expect(out.http!.auth).toMatchObject({ type: 'basic', username: 'ada', password: 'hunter2' });
+  });
+
+  it('puts the answers into an api key name and value', () => {
+    const out = interpolateVars(
+      req({
+        url: 'https://api.com',
+        auth: { type: 'apikey', key: 'X-{{?KeyName}}', value: '{{?KeyValue}}' }
+      }),
+      { promptVariables: { '?KeyName': 'Otp', '?KeyValue': '123456' } }
+    );
+
+    expect(out.http!.auth).toMatchObject({ type: 'apikey', key: 'X-Otp', value: '123456' });
+  });
+
+  it('leaves an auth token in place when the reader was never asked', () => {
+    const out = interpolateVars(
+      req({ url: 'https://api.com', auth: { type: 'bearer', token: '{{?Token}}' } })
+    );
+
+    expect(out.http!.auth).toMatchObject({ type: 'bearer', token: '{{?Token}}' });
+  });
 });
 
 describe('where prompt answers sit among the other variables', () => {

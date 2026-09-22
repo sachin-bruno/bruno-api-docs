@@ -1,7 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import {
   buildPromptVariableMap,
-  containsPromptVariable,
   extractPromptVariables,
   extractPromptVariablesFromString,
   isPromptVariableToken,
@@ -58,12 +57,6 @@ describe('finding prompts in a string', () => {
     const url = '{{?OTP}}';
     expect(extractPromptVariablesFromString(url)).toEqual(['OTP']);
     expect(extractPromptVariablesFromString(url)).toEqual(['OTP']);
-  });
-
-  it('reports whether a string holds a prompt at all', () => {
-    expect(containsPromptVariable('{{?OTP}}')).toBe(true);
-    expect(containsPromptVariable('{{baseUrl}}')).toBe(false);
-    expect(containsPromptVariable('')).toBe(false);
   });
 
   it('survives a value that is not a string', () => {

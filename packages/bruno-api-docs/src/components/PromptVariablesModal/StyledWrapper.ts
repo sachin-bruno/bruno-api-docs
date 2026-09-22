@@ -1,7 +1,7 @@
 import styled from '@emotion/styled';
 import { Modal } from '@/ui/Modal/Modal';
 
-export const StyledModal = styled(Modal)`
+export const StyledWrapper = styled(Modal)`
   .modal-dialog {
     width: min(34rem, 100%);
   }
@@ -11,12 +11,12 @@ export const StyledModal = styled(Modal)`
     font-size: 0.875rem;
     color: var(--text-primary);
   }
-`;
 
-export const StyledWrapper = styled.div`
-  max-height: 60vh;
-  overflow-y: auto;
-  padding: 0 0.2rem;
+  .prompt-variables-body {
+    max-height: 60vh;
+    overflow-y: auto;
+    padding: 0 0.2rem;
+  }
 
   .prompt-variables-fields {
     display: flex;
@@ -54,55 +54,55 @@ export const StyledWrapper = styled.div`
       outline: none;
     }
   }
-`;
 
-export const StyledFooter = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 0.5rem;
-  margin-top: 1rem;
-  padding-top: 1rem;
-  border-top: 1px solid var(--border-color);
-
-  button {
-    display: inline-flex;
+  .prompt-variables-footer {
+    display: flex;
     align-items: center;
-    justify-content: center;
-    height: 1.875rem;
-    padding: 0 0.875rem;
-    border-radius: var(--oc-radius);
-    font-family: var(--font-sans);
-    font-weight: 500;
-    font-size: 0.8125rem;
-    line-height: 1;
-    white-space: nowrap;
-    cursor: pointer;
+    justify-content: flex-end;
+    gap: 0.5rem;
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border-color);
 
-    &:focus-visible {
-      outline: 2px solid var(--primary-color);
-      outline-offset: 2px;
+    button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      height: 1.875rem;
+      padding: 0 0.875rem;
+      border-radius: var(--oc-radius);
+      font-family: var(--font-sans);
+      font-weight: 500;
+      font-size: 0.8125rem;
+      line-height: 1;
+      white-space: nowrap;
+      cursor: pointer;
+
+      &:focus-visible {
+        outline: 2px solid var(--primary-color);
+        outline-offset: 2px;
+      }
     }
-  }
 
-  button.prompt-variables-cancel {
-    border: 1px solid transparent;
-    background: transparent;
-    color: var(--text-secondary);
+    button.prompt-variables-cancel {
+      border: 1px solid transparent;
+      background: transparent;
+      color: var(--text-secondary);
 
-    &:hover {
-      color: var(--text-primary);
+      &:hover {
+        color: var(--text-primary);
+      }
     }
-  }
 
-  button.prompt-variables-submit {
-    border: 1px solid var(--oc-brand);
-    background-color: var(--oc-brand);
-    color: var(--oc-background-base);
-    font-weight: 600;
+    button.prompt-variables-submit {
+      border: 1px solid var(--oc-brand);
+      background-color: var(--oc-brand);
+      color: var(--oc-background-base);
+      font-weight: 600;
 
-    &:hover {
-      opacity: 0.92;
+      &:hover {
+        opacity: 0.92;
+      }
     }
   }
 `;

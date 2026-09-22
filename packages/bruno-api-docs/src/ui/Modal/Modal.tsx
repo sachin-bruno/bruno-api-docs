@@ -16,11 +16,9 @@ export interface ModalProps {
 export const Modal: React.FC<ModalProps> = ({
   open, onClose, title, children, ariaLabel, className, initialFocusRef
 }) => {
-  const dialogRef = useRef<HTMLDivElement>(null);
   const focusedRef = useRef(false);
 
   const attachDialog = useCallback((node: HTMLDivElement | null) => {
-    dialogRef.current = node;
     if (!node) {
       focusedRef.current = false;
       return;

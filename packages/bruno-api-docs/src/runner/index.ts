@@ -1,4 +1,4 @@
-import type { HttpRequest } from '@opencollection/types/requests/http';
+import type { HttpRequest, HttpRequestHeader } from '@opencollection/types/requests/http';
 import type { OpenCollection as OpenCollectionCollection } from '@opencollection/types';
 import type { Environment } from '@opencollection/types/config/environments';
 import { RequestExecutor } from './RequestExecutor';
@@ -427,8 +427,8 @@ export class RequestRunner {
     const { folderVariables, requestVariables } = getCollectionFolderRequestVariables(collection, processed);
     const body = getHttpBody(processed);
 
-    const enabledHeaders = (rows: unknown): unknown[] =>
-      (Array.isArray(rows) ? rows : []).filter((row) => (row as { disabled?: boolean })?.disabled !== true);
+    const enabledHeaders = (rows: HttpRequestHeader[]): HttpRequestHeader[] =>
+      rows.filter((row) => row.disabled !== true);
 
     const effectiveVariables = {
       ...getCollectionVariables(collection),

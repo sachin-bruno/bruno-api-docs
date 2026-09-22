@@ -31,7 +31,8 @@ export const parsePathParamNames = (url: string | undefined | null): string[] =>
   if (!url || typeof url !== 'string') return [];
 
   // Only the path matters; drop the query string and fragment up-front.
-  const pathPortion = url.split('?')[0].split('#')[0];
+  const pathEnd = pathEndIndex(url);
+  const pathPortion = pathEnd === -1 ? url : url.slice(0, pathEnd);
 
   const names: string[] = [];
   const seen = new Set<string>();
@@ -108,7 +109,7 @@ export const applyPathParams = (
   if (valueByName.size === 0) return url;
 
   // Substitute only within the path; preserve the query string / fragment.
-  const sepIndex = url.search(/[?#]/);
+  const sepIndex = pathEndIndex(url);
   const pathPart = sepIndex === -1 ? url : url.slice(0, sepIndex);
   const rest = sepIndex === -1 ? '' : url.slice(sepIndex);
 
@@ -186,7 +187,7 @@ export const buildRequestUrl = (
   return `${base}${queryString ? `?${queryString}` : ''}${fragment}`;
 };
 
-const queryStartIndex = (str: string): number => {
+const indexOutsideTemplates = (str: string, separators: string): number => {
   let depth = 0;
   for (let i = 0; i < str.length; i += 1) {
     if (str.startsWith('{{', i)) {
@@ -199,10 +200,14 @@ const queryStartIndex = (str: string): number => {
       i += 1;
       continue;
     }
-    if (depth === 0 && str[i] === '?') return i;
+    if (depth === 0 && separators.includes(str[i])) return i;
   }
   return -1;
 };
+
+const queryStartIndex = (str: string): number => indexOutsideTemplates(str, '?');
+
+const pathEndIndex = (str: string): number => indexOutsideTemplates(str, '?#');
 
 const parseUrlQueryParams = (url: string | undefined | null): { name: string; value: string }[] => {
   if (!url || typeof url !== 'string') return [];
@@ -270,7 +275,7 @@ export const setUrlQueryParams = (
   const hashIndex = url.indexOf('#');
   const fragment = hashIndex === -1 ? '' : url.slice(hashIndex);
   const beforeHash = hashIndex === -1 ? url : url.slice(0, hashIndex);
-  const qIndex = beforeHash.indexOf('?');
+  const qIndex = queryStartIndex(beforeHash);
   const base = qIndex === -1 ? beforeHash : beforeHash.slice(0, qIndex);
 
   const queryString = enabled.map((p) => `${p.name}=${p.value ?? ''}`).join('&');

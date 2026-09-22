@@ -1,5 +1,5 @@
 import React, { useCallback, useRef, useState } from 'react';
-import { StyledFooter, StyledModal, StyledWrapper } from './StyledWrapper';
+import { StyledWrapper } from './StyledWrapper';
 
 interface PromptVariablesModalProps {
   open: boolean;
@@ -28,19 +28,23 @@ export const PromptVariablesModal: React.FC<PromptVariablesModalProps> = ({
   if (!names.length) return null;
 
   return (
-    <StyledModal
+    <StyledWrapper
       open={open}
       onClose={onCancel}
-      title={<span className="prompt-variables-title">Input Required</span>}
+      title={<span className="prompt-variables-title" data-testid="prompt-variables-title">Input Required</span>}
       ariaLabel="Input Required"
       initialFocusRef={firstFieldRef}
     >
       <form onSubmit={handleSubmit}>
-        <StyledWrapper data-testid="prompt-variables-modal-content">
+        <div className="prompt-variables-body" data-testid="prompt-variables-modal-content">
           <div className="prompt-variables-fields">
             {names.map((name, index) => (
               <div key={name} data-testid="prompt-variable-input-container">
-                <label htmlFor={`prompt-${index}`} className="prompt-variable-label">
+                <label
+                  htmlFor={`prompt-${index}`}
+                  className="prompt-variable-label"
+                  data-testid={`prompt-variable-label-${index}`}
+                >
                   {name}
                 </label>
                 <input
@@ -60,9 +64,9 @@ export const PromptVariablesModal: React.FC<PromptVariablesModalProps> = ({
               </div>
             ))}
           </div>
-        </StyledWrapper>
+        </div>
 
-        <StyledFooter>
+        <div className="prompt-variables-footer">
           <button
             type="button"
             className="prompt-variables-cancel"
@@ -74,9 +78,9 @@ export const PromptVariablesModal: React.FC<PromptVariablesModalProps> = ({
           <button type="submit" className="prompt-variables-submit" data-testid="prompt-variables-submit">
             Continue
           </button>
-        </StyledFooter>
+        </div>
       </form>
-    </StyledModal>
+    </StyledWrapper>
   );
 };
 

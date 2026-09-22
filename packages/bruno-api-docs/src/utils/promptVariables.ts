@@ -11,16 +11,6 @@ export const isPromptVariableToken = (word: string): boolean => PROMPT_VARIABLE_
 
 export const promptVariableName = (word: string): string | null => PROMPT_VARIABLE_TEXT_PATTERN.exec(word)?.[1] ?? null;
 
-export const containsPromptVariable = (str: string): boolean => promptVariableTemplatePattern().test(str);
-
-export const replacePromptTokens = (str: string, promptValues: Record<string, unknown>): string =>
-  str.replace(promptVariableTemplatePattern(), (match, name) => {
-    const key = toPromptVariableKey(name);
-    if (!Object.prototype.hasOwnProperty.call(promptValues, key)) return match;
-    const value = promptValues[key];
-    return value === null || value === undefined ? match : String(value);
-  });
-
 export const extractPromptVariablesFromString = (str: string): string[] => {
   if (typeof str !== 'string' || !str) return [];
   return Array.from(new Set(Array.from(str.matchAll(promptVariableTemplatePattern()), (match) => match[1])));
