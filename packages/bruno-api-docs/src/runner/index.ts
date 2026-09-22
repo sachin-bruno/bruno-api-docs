@@ -8,6 +8,7 @@ import type { RunRequestCallback } from '@/scripting/utils/bru';
 import AssertRuntime, { type AssertionResult } from '@/scripting/runtime/assert-runtime';
 import { getTreePathFromCollectionToItem, mergeHeaders, mergeScripts, mergeAuth, interpolateVars, findItemByPath } from './utils';
 import { getCollectionFolderRequestVariables, getCollectionVariables } from './utils/variable-merger';
+import { snapshotEnabledHeaders, getHeaderNamesChangedByScript } from './utils/script-headers';
 import { coerceVariableValue, parseValueByDataType, type CoercedVariableValue } from '@/utils/variableDataType';
 import { externalSecretValues, type ExternalSecretEntry } from '@/utils/variableResolution';
 import type { Variables, JsonValue } from './utils/variable-interpolator';
@@ -251,6 +252,7 @@ export class RequestRunner {
     try {
       const processedRequest = (prepared ?? await this.prepareRequest(item, collection)) as InternalHttpRequest;
       processedRequest.__bruno__executionMode = 'standalone';
+      processedRequest.__brunoHeadersSetByScript = [];
 
       const { folderVariables, requestVariables } = getCollectionFolderRequestVariables(collection, processedRequest);
 
@@ -274,6 +276,7 @@ export class RequestRunner {
 
       // Pre-request script
       if (scriptsObj.preRequest) {
+        const headersBeforeScript = snapshotEnabledHeaders(processedRequest);
         try {
           await this.scriptRuntime.runScript({
             script: scriptsObj.preRequest,
@@ -292,6 +295,10 @@ export class RequestRunner {
             warnings: warnings.length ? warnings : null
           };
         }
+        processedRequest.__brunoHeadersSetByScript = getHeaderNamesChangedByScript(
+          headersBeforeScript,
+          processedRequest
+        );
       }
 
       const interpolatedRequest = interpolateVars(processedRequest, allVariables);
