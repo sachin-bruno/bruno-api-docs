@@ -40,8 +40,6 @@ const HttpRequestPlaygroundView: React.FC<PlaygroundViewProps> = ({ item, collec
   const response = useAppSelector((state) => selectPlaygroundResponse(state, itemUuid));
   const [isLoading, setIsLoading] = useState(false);
   const promptVariablesController = usePromptVariables();
-  // Pulled out so sending only depends on the stable collect, not on the controller object, whose
-  // identity changes every time the prompt dialog opens or closes.
   const { collect: collectPromptVariables } = promptVariablesController;
   // The request/response split is one draggable divider whose axis follows the
   // orientation: horizontal layout resizes width, vertical layout resizes height.
