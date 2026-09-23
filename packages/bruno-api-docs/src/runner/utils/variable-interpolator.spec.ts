@@ -108,6 +108,15 @@ describe('interpolateVars — typed variables in a JSON body', () => {
     });
   });
 
+  it('escapes a JSON body even when the collection sets no content type header', () => {
+    const out = interpolateVars(
+      req({ method: 'POST', url: 'https://api.com', body: { type: 'json', data: '{"note":"{{note}}"}' } }),
+      { folderVariables: { note: 'he said "hi"' } }
+    );
+
+    expect(JSON.parse((out.http!.body as { data: string }).data)).toEqual({ note: 'he said "hi"' });
+  });
+
   it('still JSON-escapes a string value that contains quotes', () => {
     const out = interpolateVars(jsonReq('{"note":"{{note}}"}'), {
       folderVariables: { note: 'he said "hi"' }
@@ -145,6 +154,26 @@ describe('interpolateVars — a variable whose value mentions its own name', () 
     });
 
     expect(out.http!.url).toBe('https://api.com/api.com');
+  });
+
+  it('gives up quietly on an absurdly deep chain of variables rather than failing the send', () => {
+    const collectionVariables: Record<string, string> = {};
+    for (let index = 0; index < 5000; index += 1) {
+      collectionVariables[`v${index}`] = `{{v${index + 1}}}`;
+    }
+    collectionVariables.v5000 = 'END';
+
+    const out = interpolateVars(req({ url: '{{v0}}' }), { collectionVariables });
+
+    expect(out.http!.url).toMatch(/^\{\{v\d+\}\}$/);
+  });
+
+  it('fills in a variable reached directly and through another variable in the same string', () => {
+    const out = interpolateVars(req({ url: '{{a}}-{{b}}' }), {
+      collectionVariables: { a: '{{b}}', b: 'B' }
+    });
+
+    expect(out.http!.url).toBe('B-B');
   });
 
   it('still follows a chain of variables that point at one another', () => {

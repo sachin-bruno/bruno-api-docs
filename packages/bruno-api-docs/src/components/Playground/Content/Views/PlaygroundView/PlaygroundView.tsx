@@ -40,6 +40,9 @@ const HttpRequestPlaygroundView: React.FC<PlaygroundViewProps> = ({ item, collec
   const response = useAppSelector((state) => selectPlaygroundResponse(state, itemUuid));
   const [isLoading, setIsLoading] = useState(false);
   const promptVariablesController = usePromptVariables();
+  // Pulled out so sending only depends on the stable collect, not on the controller object, whose
+  // identity changes every time the prompt dialog opens or closes.
+  const { collect: collectPromptVariables } = promptVariablesController;
   // The request/response split is one draggable divider whose axis follows the
   // orientation: horizontal layout resizes width, vertical layout resizes height.
   const { size: paneSize, isResizing, containerRef, startResize } = useSplitPane(orientation);
@@ -124,7 +127,7 @@ const HttpRequestPlaygroundView: React.FC<PlaygroundViewProps> = ({ item, collec
       const promptNames = await requestRunner.collectPromptVariableNames({
         item: editableItem, collection, environment, prepared
       });
-      const promptVariables = await promptVariablesController.collect(promptNames);
+      const promptVariables = await collectPromptVariables(promptNames);
       if (!promptVariables) return;
 
       setIsLoading(true);
@@ -156,7 +159,7 @@ const HttpRequestPlaygroundView: React.FC<PlaygroundViewProps> = ({ item, collec
       sendInFlightRef.current = false;
       setIsLoading(false);
     }
-  }, [collection, editableItem, selectedEnvironment, itemUuid, dispatch, promptVariablesController]);
+  }, [collection, editableItem, selectedEnvironment, itemUuid, dispatch, collectPromptVariables]);
 
   return (
     <ItemVariableResolverProvider

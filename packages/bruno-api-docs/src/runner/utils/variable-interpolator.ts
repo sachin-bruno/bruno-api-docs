@@ -12,7 +12,7 @@ export type Variables = Record<string, JsonValue>;
 const MOCK_PATTERN = /\{\{\$(\w+)\}\}/g;
 const JSON_SPECIAL_CHARS = /[\\\n\r\t"]/;
 
-const MAX_INTERPOLATION_PASSES = 10;
+const MAX_RESOLUTION_DEPTH = 64;
 
 const escapeJSONString = (str: string): string => {
   if (!JSON_SPECIAL_CHARS.test(str)) {
@@ -73,15 +73,24 @@ export const interpolate = (
   const mocked = prepareMock(str, escapeJSONStrings);
   const preparedVars = isPlainObject(variables) ? prepareMockObj(variables, escapeJSONStrings) : variables;
 
-  const substituted = new Set<string>();
+  const resolving = new Set<string>();
 
-  const substitute = (input: string): { output: string; changed: boolean } => {
-    let changed = false;
-    const substitutedThisPass = new Set<string>();
-    const output = input.replace(templateVariableGlobalRegex(), (match, variableName) => {
+  const expandInside = (name: string, value: string): string => {
+    if (resolving.size >= MAX_RESOLUTION_DEPTH) {
+      return value;
+    }
+
+    resolving.add(name);
+    const expanded = substitute(value);
+    resolving.delete(name);
+    return expanded;
+  };
+
+  const substitute = (input: string): string =>
+    input.replace(templateVariableGlobalRegex(), (match, variableName) => {
       const trimmedName = variableName.trim();
 
-      if (substituted.has(trimmedName)) {
+      if (resolving.has(trimmedName)) {
         return match;
       }
 
@@ -92,11 +101,8 @@ export const interpolate = (
         return match; // Keep original if variable not found
       }
 
-      changed = true;
-      substitutedThisPass.add(trimmedName);
-
       if (typeof value === 'object') {
-        return JSON.stringify(value);
+        return expandInside(trimmedName, JSON.stringify(value));
       }
 
       let result = String(value);
@@ -104,19 +110,10 @@ export const interpolate = (
         result = result.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
       }
 
-      return result;
+      return expandInside(trimmedName, result);
     });
-    for (const name of substitutedThisPass) substituted.add(name);
-    return { output, changed };
-  };
 
-  let resolved = mocked;
-  for (let pass = 0; pass < MAX_INTERPOLATION_PASSES; pass += 1) {
-    const { output, changed } = substitute(resolved);
-    if (!changed || output === resolved) return output;
-    resolved = output;
-  }
-  return resolved;
+  return substitute(mocked);
 };
 
 /**
@@ -132,18 +129,6 @@ const getNestedValue = (obj: JsonValue, path: string): JsonValue => {
     }
     return null;
   }, obj);
-};
-
-/**
- * Get content type from headers
- */
-const getContentType = (headers: Record<string, string> = {}): string => {
-  for (const [key, value] of Object.entries(headers)) {
-    if (key.toLowerCase() === 'content-type') {
-      return value;
-    }
-  }
-  return '';
 };
 
 /**
@@ -235,28 +220,18 @@ export const interpolateVars = (
     interpolatedRequest.http.headers = newHeaders;
   }
 
-  // Get content type for body interpolation
-  const headerMap: Record<string, string> = {};
-  const headersForContentType = getHttpHeaders(interpolatedRequest);
-  if (headersForContentType) {
-    headersForContentType.forEach((header: HttpRequestHeader) => {
-      headerMap[header.name] = header.value;
-    });
-  }
-  const contentType = getContentType(headerMap);
-
   // Interpolate body based on content type
   const currentBody = getHttpBody(interpolatedRequest);
   if (currentBody) {
     const body = currentBody;
 
     if ('type' in body && 'data' in body) {
-      if (contentType.includes('json') && body.type === 'json') {
+      if (body.type === 'json') {
         // Handle JSON body with proper escaping
         if (typeof body.data === 'string' && body.data.length > 0) {
           body.data = _interpolate(body.data, { escapeJSONStrings: true });
         }
-      } else if (contentType === 'application/x-www-form-urlencoded' && body.type === 'form-urlencoded') {
+      } else if (body.type === 'form-urlencoded') {
         // Handle form-urlencoded body
         if ('data' in body && Array.isArray(body.data)) {
           body.data = body.data.map((entry) => ({
@@ -264,7 +239,7 @@ export const interpolateVars = (
             value: _interpolate(entry.value)
           }));
         }
-      } else if (contentType === 'multipart/form-data' && body.type === 'multipart-form') {
+      } else if (body.type === 'multipart-form') {
         // Handle multipart form body
         if ('data' in body && Array.isArray(body.data)) {
           body.data = body.data.map((entry) => ({

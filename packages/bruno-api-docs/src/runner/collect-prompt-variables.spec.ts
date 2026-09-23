@@ -195,3 +195,27 @@ describe('matching the desktop scan order', () => {
     expect(position('Trace')).toBeLessThan(position('User id'));
   });
 });
+
+describe('prompts held in a runtime variable', () => {
+  it('asks for a prompt stored in a runtime variable by an earlier send', async () => {
+    const names = await runner.collectPromptVariableNames({
+      item: promptedRequest,
+      collection,
+      environment,
+      runtimeVariables: { token: '{{?Secret}}' }
+    });
+
+    expect(names).toContain('Secret');
+  });
+
+  it('asks for nothing extra when no runtime variable holds a prompt', async () => {
+    const names = await runner.collectPromptVariableNames({
+      item: promptedRequest,
+      collection,
+      environment,
+      runtimeVariables: { token: 'already-resolved' }
+    });
+
+    expect(names).not.toContain('Secret');
+  });
+});

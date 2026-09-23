@@ -44,6 +44,24 @@ describe('sending a request with prompt answers', () => {
     expect((out.http!.body as { data: string }).data).toBe('{"otp":"a"b"}');
   });
 
+  it('puts the answer into a form field even when the collection sets no content type header', () => {
+    const out = interpolateVars(
+      req({ url: 'https://api.com', body: { type: 'form-urlencoded', data: [{ name: 'otp', value: '{{?OTP}}', enabled: true }] } }),
+      { promptVariables: { '?OTP': '123456' } }
+    );
+
+    expect((out.http!.body as { data: { value: string }[] }).data[0].value).toBe('123456');
+  });
+
+  it('puts the answer into a multipart field even when the collection sets no content type header', () => {
+    const out = interpolateVars(
+      req({ url: 'https://api.com', body: { type: 'multipart-form', data: [{ name: 'otp', value: '{{?OTP}}', enabled: true }] } }),
+      { promptVariables: { '?OTP': '123456' } }
+    );
+
+    expect((out.http!.body as { data: { value: string }[] }).data[0].value).toBe('123456');
+  });
+
   it('leaves the token in place when the reader was never asked', () => {
     const out = interpolateVars(req({ url: 'https://api.com/otp/{{?OTP}}' }));
 
@@ -238,6 +256,24 @@ describe('resolving through layers of variables, as the desktop app does', () =>
     });
 
     expect(out.http!.url).toBe('https://api.example.com/users');
+  });
+
+  it('answers the same prompt everywhere it appears, including inside another variable', () => {
+    const out = interpolateVars(req({ url: '{{?OTP}}/{{path}}' }), {
+      collectionVariables: { path: 'otp/{{?OTP}}' },
+      promptVariables: { '?OTP': '123456' }
+    });
+
+    expect(out.http!.url).toBe('123456/otp/123456');
+  });
+
+  it('answers a prompt reached through two variables and again at the top level', () => {
+    const out = interpolateVars(req({ url: '{{?Host}}/{{outer}}' }), {
+      collectionVariables: { outer: '{{inner}}', inner: '{{?Host}}/v1' },
+      promptVariables: { '?Host': 'api.example.com' }
+    });
+
+    expect(out.http!.url).toBe('api.example.com/api.example.com/v1');
   });
 
   it('resolves a variable token that the reader typed into the dialog', () => {

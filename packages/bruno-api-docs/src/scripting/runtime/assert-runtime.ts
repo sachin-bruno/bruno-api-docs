@@ -122,7 +122,11 @@ export class AssertRuntime {
         environmentVariables,
         runtimeVariables,
         promptVariables,
-        globalEnvironmentVariables
+        globalEnvironmentVariables,
+        collectionVariables,
+        folderVariables,
+        requestVariables,
+        processEnvVars
       }
     });
 
@@ -164,8 +168,11 @@ export class AssertRuntime {
           scriptType: 'expression'
         });
 
+        const resolvedRhsOperand
+          = typeof rhsOperand === 'string' ? (bru.interpolate(rhsOperand) as string) : rhsOperand;
+
         // Evaluate RHS operand
-        const rhs = evaluateRhsOperand(rhsOperand, operator, context);
+        const rhs = evaluateRhsOperand(resolvedRhsOperand, operator, context);
 
         // Perform assertion based on operator
         switch (operator) {

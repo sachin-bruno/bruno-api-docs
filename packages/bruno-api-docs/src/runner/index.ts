@@ -427,9 +427,9 @@ export class RequestRunner {
   }
 
   async collectPromptVariableNames(
-    options: Pick<RunRequestOptions, 'item' | 'collection' | 'environment' | 'prepared'>
+    options: Pick<RunRequestOptions, 'item' | 'collection' | 'environment' | 'runtimeVariables' | 'prepared'>
   ): Promise<string[]> {
-    const { item, collection, environment, prepared } = options;
+    const { item, collection, environment, runtimeVariables = {}, prepared } = options;
     const processed = prepared ?? await this.prepareRequest(item, collection);
     const { folderVariables, requestVariables } = getCollectionFolderRequestVariables(collection, processed);
     const body = getHttpBody(processed);
@@ -441,7 +441,8 @@ export class RequestRunner {
       ...getCollectionVariables(collection),
       ...this.getEnvironmentVariables(environment),
       ...folderVariables,
-      ...requestVariables
+      ...requestVariables,
+      ...runtimeVariables
     };
 
     return extractPromptVariables([
