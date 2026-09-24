@@ -74,6 +74,27 @@ items:
             - name: "off"
               value: "{{?Skipped Part}}"
               disabled: true
+      - name: "Variants"
+        type: "http"
+        method: "POST"
+        url: "https://api.example.com/variants"
+        body:
+          - title: "Chosen"
+            selected: true
+            body:
+              type: "form-urlencoded"
+              data:
+                - name: "on"
+                  value: "{{?Chosen Field}}"
+                - name: "off"
+                  value: "{{?Chosen Skipped}}"
+                  disabled: true
+          - title: "Other"
+            body:
+              type: "form-urlencoded"
+              data:
+                - name: "x"
+                  value: "{{?Other Variant}}"
 `;
 
 const collection = parseYaml(collectionYaml) as any;
@@ -82,6 +103,7 @@ const promptedRequest = folder.items[0];
 const plainRequest = folder.items[1];
 const formRequest = folder.items[2];
 const multipartRequest = folder.items[3];
+const variantRequest = folder.items[4];
 
 const environment = {
   name: 'Local',
@@ -177,6 +199,14 @@ describe('rows in a form body that the request has switched off', () => {
 
     expect(names).toContain('Sent Part');
     expect(names).not.toContain('Skipped Part');
+  });
+
+  it('reads only the chosen body when the request offers several, and skips its switched-off row', async () => {
+    const names = await runner.collectPromptVariableNames({ item: variantRequest, collection });
+
+    expect(names).toContain('Chosen Field');
+    expect(names).not.toContain('Chosen Skipped');
+    expect(names).not.toContain('Other Variant');
   });
 });
 

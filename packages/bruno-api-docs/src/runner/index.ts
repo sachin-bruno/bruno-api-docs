@@ -1,4 +1,4 @@
-import type { HttpRequest, HttpRequestHeader } from '@opencollection/types/requests/http';
+import type { HttpRequest } from '@opencollection/types/requests/http';
 import type { OpenCollection as OpenCollectionCollection } from '@opencollection/types';
 import type { Environment } from '@opencollection/types/config/environments';
 import { RequestExecutor } from './RequestExecutor';
@@ -19,6 +19,7 @@ import {
   getHttpHeaders, getHttpBody, getRequestAuth, getHttpParams, type InternalHttpRequest
 } from '@/utils/schemaHelpers';
 import { extractPromptVariables } from '@/utils/promptVariables';
+import { selectBodyVariant } from '@/utils/request';
 import { getItemUuid } from '@/utils/itemUtils';
 import { cloneDeep, isEqual } from 'lodash-es';
 
@@ -437,7 +438,8 @@ export class RequestRunner {
     const enabled = <T>(rows: T[]): T[] =>
       rows.filter((row) => (row as { disabled?: boolean } | null)?.disabled !== true);
 
-    const bodyData = body && 'data' in body ? body.data : body;
+    const { body: selectedBody } = selectBodyVariant(body);
+    const bodyData = selectedBody && 'data' in selectedBody ? selectedBody.data : selectedBody;
     const bodyToScan = Array.isArray(bodyData) ? enabled(bodyData as Array<{ disabled?: boolean }>) : bodyData;
 
     const effectiveVariables = {
