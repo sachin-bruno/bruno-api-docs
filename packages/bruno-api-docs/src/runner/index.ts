@@ -434,8 +434,11 @@ export class RequestRunner {
     const { folderVariables, requestVariables } = getCollectionFolderRequestVariables(collection, processed);
     const body = getHttpBody(processed);
 
-    const enabledHeaders = (rows: HttpRequestHeader[]): HttpRequestHeader[] =>
-      rows.filter((row) => row.disabled !== true);
+    const enabled = <T>(rows: T[]): T[] =>
+      rows.filter((row) => (row as { disabled?: boolean } | null)?.disabled !== true);
+
+    const bodyData = body && 'data' in body ? body.data : body;
+    const bodyToScan = Array.isArray(bodyData) ? enabled(bodyData as Array<{ disabled?: boolean }>) : bodyData;
 
     const effectiveVariables = {
       ...getCollectionVariables(collection),
@@ -447,9 +450,9 @@ export class RequestRunner {
 
     return extractPromptVariables([
       effectiveVariables,
-      body && 'data' in body ? body.data : body,
-      enabledHeaders(getHttpHeaders(processed)),
-      getHttpParams(processed),
+      bodyToScan,
+      enabled(getHttpHeaders(processed)),
+      enabled(getHttpParams(processed)),
       getRequestAuth(processed),
       getRequestUrl(processed)
     ]);

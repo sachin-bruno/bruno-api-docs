@@ -50,12 +50,38 @@ items:
         type: "http"
         method: "GET"
         url: "https://api.example.com/health"
+      - name: "Form"
+        type: "http"
+        method: "POST"
+        url: "https://api.example.com/submit"
+        body:
+          type: "form-urlencoded"
+          data:
+            - name: "on"
+              value: "{{?Sent Field}}"
+            - name: "off"
+              value: "{{?Skipped Field}}"
+              disabled: true
+      - name: "Multipart"
+        type: "http"
+        method: "POST"
+        url: "https://api.example.com/upload"
+        body:
+          type: "multipart-form"
+          data:
+            - name: "on"
+              value: "{{?Sent Part}}"
+            - name: "off"
+              value: "{{?Skipped Part}}"
+              disabled: true
 `;
 
 const collection = parseYaml(collectionYaml) as any;
 const folder = collection.items[0];
 const promptedRequest = folder.items[0];
 const plainRequest = folder.items[1];
+const formRequest = folder.items[2];
+const multipartRequest = folder.items[3];
 
 const environment = {
   name: 'Local',
@@ -111,10 +137,11 @@ describe('working out which prompts a request needs', () => {
     expect(names).toEqual(expect.arrayContaining(['OTP', 'Trace']));
   });
 
-  it('still asks for a value in a switched-off param, matching the desktop app', async () => {
+  it('does not ask for a value in a switched-off param, which never reaches the request', async () => {
     const names = await runner.collectPromptVariableNames({ item: promptedRequest, collection, environment });
 
-    expect(names).toContain('Disabled Param');
+    expect(names).not.toContain('Disabled Param');
+    expect(names).toEqual(expect.arrayContaining(['OTP', 'Trace']));
   });
 
   it('does not ask for a prompt hidden in a variable that a narrower scope overrides', async () => {
@@ -134,6 +161,22 @@ describe('working out which prompts a request needs', () => {
     const names = await runner.collectPromptVariableNames({ item: plainRequest, collection: { info: {} } as any });
 
     expect(names).toEqual([]);
+  });
+});
+
+describe('rows in a form body that the request has switched off', () => {
+  it('asks only for the form field that is switched on', async () => {
+    const names = await runner.collectPromptVariableNames({ item: formRequest, collection });
+
+    expect(names).toContain('Sent Field');
+    expect(names).not.toContain('Skipped Field');
+  });
+
+  it('asks only for the multipart field that is switched on', async () => {
+    const names = await runner.collectPromptVariableNames({ item: multipartRequest, collection });
+
+    expect(names).toContain('Sent Part');
+    expect(names).not.toContain('Skipped Part');
   });
 });
 
